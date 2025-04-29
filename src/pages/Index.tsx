@@ -107,11 +107,10 @@ const Index = () => {
                   </div>
                   <Progress
                     value={(item.inStock / item.minLevel) * 100}
-                    className="h-2"
-                    indicatorClassName={
+                    className={
                       item.inStock < item.minLevel * 0.5
-                        ? "bg-pos-danger"
-                        : "bg-pos-warning"
+                        ? "h-2 bg-secondary [&>div]:bg-red-500"
+                        : "h-2 bg-secondary [&>div]:bg-amber-500"
                     }
                   />
                 </div>
