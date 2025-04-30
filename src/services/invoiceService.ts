@@ -88,16 +88,16 @@ export async function getInvoices(): Promise<Invoice[]> {
 
 export async function createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
-    // Insert invoice - Note: We don't need to provide invoice_number as the trigger will generate it
+    // Insert invoice - We don't need to provide invoice_number as the trigger will generate it
     const { data: newInvoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert({
         customer_id: invoice.customerId,
         quotation_id: invoice.quotationId,
-        subtotal: invoice.subtotal.toString(), // Convert to string
-        tax: invoice.tax.toString(), // Convert to string
-        discount: invoice.discount.toString(), // Convert to string
-        total: invoice.total.toString(), // Convert to string
+        subtotal: invoice.subtotal.toString(),
+        tax: invoice.tax.toString(),
+        discount: invoice.discount.toString(),
+        total: invoice.total.toString(),
         notes: invoice.notes,
         payment_terms: invoice.paymentTerms,
         due_date: invoice.dueDate.toISOString(),
@@ -113,10 +113,10 @@ export async function createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 
       invoice_id: newInvoice.id,
       product_id: item.productId,
       quantity: item.quantity,
-      unit_price: item.unitPrice.toString(), // Convert to string
-      discount: item.discount.toString(), // Convert to string
-      tax: item.tax.toString(), // Convert to string
-      total: item.total.toString() // Convert to string
+      unit_price: item.unitPrice.toString(),
+      discount: item.discount.toString(),
+      tax: item.tax.toString(),
+      total: item.total.toString()
     }));
 
     const { error: itemsError } = await supabase
@@ -178,10 +178,12 @@ export async function createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 
 
       if (customerFetchError) throw customerFetchError;
 
+      const currentBalance = Number(customerData.current_balance) || 0;
+      
       const { error: customerUpdateError } = await supabase
         .from('customers')
         .update({
-          current_balance: parseFloat(customerData.current_balance) + invoice.total
+          current_balance: (currentBalance + invoice.total).toString()
         })
         .eq('id', invoice.customerId);
 
@@ -252,8 +254,8 @@ export async function updateInvoice(id: string, invoice: Partial<Omit<Invoice, '
 
         if (customerFetchError) throw customerFetchError;
 
-        const currentBalance = parseFloat(customerData.current_balance) || 0;
-        const invoiceTotal = invoice.total || parseFloat(originalInvoice.total);
+        const currentBalance = Number(customerData.current_balance) || 0;
+        const invoiceTotal = invoice.total !== undefined ? invoice.total : Number(originalInvoice.total);
         
         const { error: customerUpdateError } = await supabase
           .from('customers')
@@ -277,8 +279,8 @@ export async function updateInvoice(id: string, invoice: Partial<Omit<Invoice, '
 
         if (customerFetchError) throw customerFetchError;
 
-        const currentBalance = parseFloat(customerData.current_balance) || 0;
-        const invoiceTotal = invoice.total || parseFloat(originalInvoice.total);
+        const currentBalance = Number(customerData.current_balance) || 0;
+        const invoiceTotal = invoice.total !== undefined ? invoice.total : Number(originalInvoice.total);
         
         const { error: customerUpdateError } = await supabase
           .from('customers')

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product, ProductVariant } from "@/types";
 import { toast } from "@/components/ui/use-toast";
@@ -79,10 +80,10 @@ export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 
         category: product.category,
         barcode: product.barcode,
         image_url: product.image,
-        retail_price: product.retailPrice.toString(), // Convert to string
-        wholesale_price: product.wholesalePrice.toString(), // Convert to string
-        cost: product.cost.toString(), // Convert to string
-        tax_rate: product.taxRate.toString(), // Convert to string
+        retail_price: product.retailPrice.toString(),
+        wholesale_price: product.wholesalePrice.toString(),
+        cost: product.cost.toString(),
+        tax_rate: product.taxRate.toString(),
         min_stock_level: product.minStockLevel
       })
       .select()
@@ -96,8 +97,8 @@ export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 
         product_id: newProduct.id,
         name: variant.name,
         sku: variant.sku,
-        price: variant.price.toString(), // Convert to string
-        cost: variant.cost.toString(), // Convert to string
+        price: variant.price.toString(),
+        cost: variant.cost.toString(),
         attributes: variant.attributes
       }));
 

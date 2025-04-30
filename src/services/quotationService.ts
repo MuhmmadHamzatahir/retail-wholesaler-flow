@@ -84,15 +84,15 @@ export async function getQuotations(): Promise<Quotation[]> {
 
 export async function createQuotation(quotation: Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
-    // Insert quotation - Note: We don't need to provide quotation_number as the trigger will generate it
+    // Insert quotation - We don't need to provide quotation_number as the trigger will generate it
     const { data: newQuotation, error: quotationError } = await supabase
       .from('quotations')
       .insert({
         customer_id: quotation.customerId,
-        subtotal: quotation.subtotal.toString(), // Convert to string
-        tax: quotation.tax.toString(), // Convert to string
-        discount: quotation.discount.toString(), // Convert to string
-        total: quotation.total.toString(), // Convert to string
+        subtotal: quotation.subtotal.toString(),
+        tax: quotation.tax.toString(),
+        discount: quotation.discount.toString(),
+        total: quotation.total.toString(),
         notes: quotation.notes,
         expiry_date: quotation.expiryDate.toISOString(),
         status: quotation.status
@@ -107,10 +107,10 @@ export async function createQuotation(quotation: Omit<Quotation, 'id' | 'created
       quotation_id: newQuotation.id,
       product_id: item.productId,
       quantity: item.quantity,
-      unit_price: item.unitPrice.toString(), // Convert to string
-      discount: item.discount.toString(), // Convert to string
-      tax: item.tax.toString(), // Convert to string
-      total: item.total.toString() // Convert to string
+      unit_price: item.unitPrice.toString(),
+      discount: item.discount.toString(),
+      tax: item.tax.toString(),
+      total: item.total.toString()
     }));
 
     const { error: itemsError } = await supabase

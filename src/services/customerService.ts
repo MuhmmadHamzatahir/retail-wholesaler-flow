@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types";
 import { toast } from "@/components/ui/use-toast";
@@ -25,7 +26,7 @@ export async function getCustomers(): Promise<Customer[]> {
         country: customer.country || ""
       },
       creditLimit: customer.credit_limit,
-      currentBalance: parseFloat(customer.current_balance) || 0,
+      currentBalance: Number(customer.current_balance) || 0,
       createdAt: new Date(customer.created_at)
     }));
   } catch (error: any) {
@@ -55,7 +56,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'
         zip: customer.address.zip,
         country: customer.address.country,
         credit_limit: customer.creditLimit,
-        current_balance: customer.currentBalance.toString() // Convert to string
+        current_balance: customer.currentBalance !== undefined ? customer.currentBalance.toString() : "0"
       })
       .select()
       .single();
@@ -96,7 +97,7 @@ export async function updateCustomer(id: string, customer: Partial<Omit<Customer
       if (customer.address.country) updateData.country = customer.address.country;
     }
     if (customer.creditLimit !== undefined) updateData.credit_limit = customer.creditLimit;
-    if (customer.currentBalance !== undefined) updateData.current_balance = customer.currentBalance.toString(); // Convert to string
+    if (customer.currentBalance !== undefined) updateData.current_balance = customer.currentBalance.toString();
     
     const { error } = await supabase
       .from('customers')
