@@ -114,7 +114,8 @@ export default function QuotationForm({ customers, products, onSubmit, quotation
     
     const updatedItems = [...items];
     updatedItems[index] = { ...item, total };
-    setValue('items', updatedItems);
+    // Fix: Use specific non-spread syntax to ensure type safety
+    setValue('items', updatedItems as any);
   };
 
   // Update product details when product is selected
@@ -128,24 +129,28 @@ export default function QuotationForm({ customers, products, onSubmit, quotation
         productName: product.name,
         unitPrice: product.price,
       };
-      setValue('items', updatedItems);
+      // Fix: Use specific non-spread syntax to ensure type safety
+      setValue('items', updatedItems as any);
       calculateItemTotal(index);
     }
   };
 
   // Add a new item row
   const addItem = () => {
-    setValue('items', [
+    const newItems = [
       ...items,
       { productId: '', productName: '', quantity: 1, unitPrice: 0, discount: 0, tax: 0, total: 0 }
-    ]);
+    ];
+    // Fix: Use specific non-spread syntax to ensure type safety
+    setValue('items', newItems as any);
   };
 
   // Remove an item row
   const removeItem = (index: number) => {
     if (items.length > 1) {
       const updatedItems = items.filter((_, i) => i !== index);
-      setValue('items', updatedItems);
+      // Fix: Use specific non-spread syntax to ensure type safety
+      setValue('items', updatedItems as any);
     }
   };
 
@@ -232,7 +237,8 @@ export default function QuotationForm({ customers, products, onSubmit, quotation
                         ...item, 
                         quantity: parseInt(e.target.value) || 1 
                       };
-                      setValue('items', updatedItems);
+                      // Fix: Use specific non-spread syntax to ensure type safety
+                      setValue('items', updatedItems as any);
                       calculateItemTotal(index);
                     }}
                     className="h-9"
@@ -251,7 +257,8 @@ export default function QuotationForm({ customers, products, onSubmit, quotation
                         ...item, 
                         unitPrice: parseFloat(e.target.value) || 0 
                       };
-                      setValue('items', updatedItems);
+                      // Fix: Use specific non-spread syntax to ensure type safety
+                      setValue('items', updatedItems as any);
                       calculateItemTotal(index);
                     }}
                     className="h-9"
@@ -271,7 +278,8 @@ export default function QuotationForm({ customers, products, onSubmit, quotation
                         ...item, 
                         discount: parseFloat(e.target.value) || 0 
                       };
-                      setValue('items', updatedItems);
+                      // Fix: Use specific non-spread syntax to ensure type safety
+                      setValue('items', updatedItems as any);
                       calculateItemTotal(index);
                     }}
                     className="h-9"
@@ -291,7 +299,8 @@ export default function QuotationForm({ customers, products, onSubmit, quotation
                         ...item, 
                         tax: parseFloat(e.target.value) || 0 
                       };
-                      setValue('items', updatedItems);
+                      // Fix: Use specific non-spread syntax to ensure type safety
+                      setValue('items', updatedItems as any);
                       calculateItemTotal(index);
                     }}
                     className="h-9"

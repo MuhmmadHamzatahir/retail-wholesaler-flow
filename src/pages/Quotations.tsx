@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,8 +65,13 @@ const Quotations = () => {
   };
 
   const handleCreateQuotation = (data: any) => {
+    // Find the customer name to include
+    const selectedCustomer = customers?.find(c => c.id === data.customerId);
+    const customerName = selectedCustomer ? selectedCustomer.name : '';
+    
     createQuotation({
       customerId: data.customerId,
+      customerName: customerName, // Add customerName to meet the type requirement
       items: data.items,
       subtotal: data.subtotal,
       tax: data.tax,
@@ -81,6 +85,7 @@ const Quotations = () => {
 
   const handleUpdateQuotation = (data: any) => {
     if (selectedQuotation) {
+      // Keep the existing customerName when updating
       updateQuotation({
         id: selectedQuotation.id,
         quotation: {
@@ -92,7 +97,8 @@ const Quotations = () => {
           total: data.total,
           notes: data.notes,
           expiryDate: data.expiryDate,
-          status: data.status
+          status: data.status,
+          customerName: selectedQuotation.customerName // Keep existing customerName
         }
       });
     }
