@@ -89,20 +89,22 @@ export async function getInvoices(): Promise<Invoice[]> {
 export async function createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
     // Insert invoice - We don't need to provide invoice_number as the trigger will generate it
+    const invoiceData: any = {
+      customer_id: invoice.customerId,
+      quotation_id: invoice.quotationId,
+      subtotal: invoice.subtotal.toString(),
+      tax: invoice.tax.toString(),
+      discount: invoice.discount.toString(),
+      total: invoice.total.toString(),
+      notes: invoice.notes,
+      payment_terms: invoice.paymentTerms,
+      due_date: invoice.dueDate.toISOString(),
+      status: invoice.status
+    };
+
     const { data: newInvoice, error: invoiceError } = await supabase
       .from('invoices')
-      .insert({
-        customer_id: invoice.customerId,
-        quotation_id: invoice.quotationId,
-        subtotal: invoice.subtotal.toString(),
-        tax: invoice.tax.toString(),
-        discount: invoice.discount.toString(),
-        total: invoice.total.toString(),
-        notes: invoice.notes,
-        payment_terms: invoice.paymentTerms,
-        due_date: invoice.dueDate.toISOString(),
-        status: invoice.status
-      })
+      .insert(invoiceData)
       .select()
       .single();
 

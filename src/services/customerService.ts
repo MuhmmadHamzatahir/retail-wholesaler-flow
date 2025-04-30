@@ -42,22 +42,25 @@ export async function getCustomers(): Promise<Customer[]> {
 
 export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'>) {
   try {
+    // Using explicit type assertion to fix the error
+    const customerData: any = {
+      type: customer.type,
+      name: customer.name,
+      company: customer.company,
+      email: customer.email,
+      phone: customer.phone,
+      street: customer.address.street,
+      city: customer.address.city,
+      state: customer.address.state,
+      zip: customer.address.zip,
+      country: customer.address.country,
+      credit_limit: customer.creditLimit,
+      current_balance: customer.currentBalance ? customer.currentBalance.toString() : "0"
+    };
+
     const { data, error } = await supabase
       .from('customers')
-      .insert({
-        type: customer.type,
-        name: customer.name,
-        company: customer.company,
-        email: customer.email,
-        phone: customer.phone,
-        street: customer.address.street,
-        city: customer.address.city,
-        state: customer.address.state,
-        zip: customer.address.zip,
-        country: customer.address.country,
-        credit_limit: customer.creditLimit,
-        current_balance: customer.currentBalance ? customer.currentBalance.toString() : "0"
-      })
+      .insert(customerData)
       .select()
       .single();
 

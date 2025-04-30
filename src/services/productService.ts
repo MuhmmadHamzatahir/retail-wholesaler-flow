@@ -72,20 +72,22 @@ export async function getProducts(): Promise<Product[]> {
 export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
     // Insert product
+    const productData: any = {
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      barcode: product.barcode,
+      image_url: product.image,
+      retail_price: product.retailPrice.toString(),
+      wholesale_price: product.wholesalePrice.toString(),
+      cost: product.cost.toString(),
+      tax_rate: product.taxRate.toString(),
+      min_stock_level: product.minStockLevel
+    };
+
     const { data: newProduct, error: productError } = await supabase
       .from('products')
-      .insert({
-        name: product.name,
-        description: product.description,
-        category: product.category,
-        barcode: product.barcode,
-        image_url: product.image,
-        retail_price: product.retailPrice.toString(),
-        wholesale_price: product.wholesalePrice.toString(),
-        cost: product.cost.toString(),
-        tax_rate: product.taxRate.toString(),
-        min_stock_level: product.minStockLevel
-      })
+      .insert(productData)
       .select()
       .single();
 

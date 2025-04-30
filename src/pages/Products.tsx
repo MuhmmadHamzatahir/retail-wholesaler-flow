@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,17 +8,43 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Products = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const { products, isLoading, error } = useProducts();
+  const { products, isLoading, error, deleteProduct } = useProducts();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   
   // Filter products based on search query
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.barcode.includes(searchQuery)
+    product.barcode?.includes(searchQuery)
   );
+  
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    if (productToDelete) {
+      deleteProduct(productToDelete);
+      setDeleteConfirmOpen(false);
+      setProductToDelete(null);
+    }
+  };
 
   return (
     <MainLayout>
@@ -34,7 +61,10 @@ const Products = () => {
             />
           </div>
           
-          <Button className="bg-pos-blue hover:bg-pos-lightBlue">
+          <Button 
+            className="bg-pos-blue hover:bg-pos-lightBlue"
+            onClick={() => navigate('/products/new')}
+          >
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Button>
         </div>
@@ -95,16 +125,31 @@ const Products = () => {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex space-x-2">
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => navigate(`/products/${product.id}`)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleDeleteClick(product.id)}
+                            >
                               <Trash className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>
                       </tr>
                     ))}
+                    {filteredProducts.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-gray-500">
+                          No products found matching your search.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -112,6 +157,23 @@ const Products = () => {
           </CardContent>
         </Card>
       </div>
+      
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this product? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };
