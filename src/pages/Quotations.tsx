@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,10 @@ import {
   Calendar,
   MoreHorizontal,
   Filter, 
-  Check
+  Check,
+  Trash,
+  Send,
+  Eye
 } from 'lucide-react';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useCustomers } from '@/hooks/useCustomers';
@@ -33,14 +37,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Quotation } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import QuotationView from '@/components/quotations/QuotationView';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Quotations = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isNewQuotationModalOpen, setIsNewQuotationModalOpen] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | undefined>(undefined);
+  const [viewQuotation, setViewQuotation] = useState<Quotation | undefined>(undefined);
 
-  const { quotations, isLoading, error, createQuotation, updateQuotation, convertToInvoice } = useQuotations();
+  const { quotations, isLoading, error, createQuotation, updateQuotation, deleteQuotation, convertToInvoice } = useQuotations();
   const { customers, isLoading: customersLoading } = useCustomers();
   const { products, isLoading: productsLoading } = useProducts();
   
@@ -71,7 +89,7 @@ const Quotations = () => {
     
     createQuotation({
       customerId: data.customerId,
-      customerName: customerName, // Add customerName to meet the type requirement
+      customerName: customerName,
       items: data.items,
       subtotal: data.subtotal,
       tax: data.tax,
@@ -102,10 +120,24 @@ const Quotations = () => {
         }
       });
     }
+    setSelectedQuotation(undefined);
+  };
+
+  const handleChangeStatus = (quotation: Quotation, newStatus: 'draft' | 'sent' | 'accepted' | 'expired') => {
+    updateQuotation({
+      id: quotation.id,
+      quotation: {
+        status: newStatus
+      }
+    });
   };
 
   const openEditModal = (quotation: Quotation) => {
     setSelectedQuotation(quotation);
+  };
+
+  const handleDeleteQuotation = (id: string) => {
+    deleteQuotation(id);
   };
 
   return (
@@ -208,8 +240,13 @@ const Quotations = () => {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex space-x-2">
-                              <Button variant="outline" size="sm" className="text-xs h-8">
-                                <FileText className="mr-1 h-3 w-3" /> View
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs h-8"
+                                onClick={() => setViewQuotation(quotation)}
+                              >
+                                <Eye className="mr-1 h-3 w-3" /> View
                               </Button>
                               
                               <DropdownMenu>
@@ -222,15 +259,59 @@ const Quotations = () => {
                                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                   <DropdownMenuSeparator />
                                   
-                                  <DropdownMenuItem onClick={() => openEditModal(quotation)}>
-                                    <FileText className="mr-2 h-4 w-4" /> Edit Quotation
-                                  </DropdownMenuItem>
-                                  
                                   {quotation.status !== 'converted' && (
-                                    <DropdownMenuItem onClick={() => convertToInvoice(quotation)}>
-                                      <Check className="mr-2 h-4 w-4" /> Convert to Invoice
+                                    <DropdownMenuItem onClick={() => openEditModal(quotation)}>
+                                      <FileText className="mr-2 h-4 w-4" /> Edit Quotation
                                     </DropdownMenuItem>
                                   )}
+                                  
+                                  {quotation.status !== 'converted' && quotation.status !== 'expired' && (
+                                    <>
+                                      <DropdownMenuItem onClick={() => convertToInvoice(quotation)}>
+                                        <Check className="mr-2 h-4 w-4" /> Convert to Invoice
+                                      </DropdownMenuItem>
+                                      
+                                      {quotation.status === 'draft' && (
+                                        <DropdownMenuItem onClick={() => handleChangeStatus(quotation, 'sent')}>
+                                          <Send className="mr-2 h-4 w-4" /> Mark as Sent
+                                        </DropdownMenuItem>
+                                      )}
+                                      
+                                      {quotation.status === 'sent' && (
+                                        <DropdownMenuItem onClick={() => handleChangeStatus(quotation, 'accepted')}>
+                                          <Check className="mr-2 h-4 w-4" /> Mark as Accepted
+                                        </DropdownMenuItem>
+                                      )}
+                                      
+                                      <DropdownMenuSeparator />
+                                    </>
+                                  )}
+                                  
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Trash className="mr-2 h-4 w-4 text-red-500" />
+                                        <span className="text-red-500">Delete</span>
+                                      </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will permanently delete this quotation. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction 
+                                          className="bg-red-500 hover:bg-red-600"
+                                          onClick={() => handleDeleteQuotation(quotation.id)}
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
@@ -273,6 +354,18 @@ const Quotations = () => {
           quotation={selectedQuotation}
           title="Edit Quotation"
         />
+      )}
+      
+      {/* View Quotation Dialog */}
+      {viewQuotation && (
+        <Dialog open={!!viewQuotation} onOpenChange={() => setViewQuotation(undefined)}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Quotation Details</DialogTitle>
+            </DialogHeader>
+            <QuotationView quotation={viewQuotation} />
+          </DialogContent>
+        </Dialog>
       )}
     </MainLayout>
   );

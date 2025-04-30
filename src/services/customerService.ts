@@ -56,7 +56,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'
         zip: customer.address.zip,
         country: customer.address.country,
         credit_limit: customer.creditLimit,
-        current_balance: customer.currentBalance?.toString()
+        current_balance: customer.currentBalance ? customer.currentBalance.toString() : "0"
       })
       .select()
       .single();
