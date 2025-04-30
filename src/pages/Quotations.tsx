@@ -9,20 +9,49 @@ import {
   Plus, 
   FileText, 
   Calendar,
-  MoreHorizontal 
+  MoreHorizontal,
+  Filter, 
+  Check
 } from 'lucide-react';
 import { useQuotations } from '@/hooks/useQuotations';
+import { useCustomers } from '@/hooks/useCustomers';
+import { useProducts } from '@/hooks/useProducts';
 import { Skeleton } from '@/components/ui/skeleton';
+import QuotationModal from '@/components/quotations/QuotationModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Quotation } from '@/types';
 
 const Quotations = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { quotations, isLoading, error, convertToInvoice } = useQuotations();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isNewQuotationModalOpen, setIsNewQuotationModalOpen] = useState(false);
+  const [selectedQuotation, setSelectedQuotation] = useState<Quotation | undefined>(undefined);
+
+  const { quotations, isLoading, error, createQuotation, updateQuotation, convertToInvoice } = useQuotations();
+  const { customers, isLoading: customersLoading } = useCustomers();
+  const { products, isLoading: productsLoading } = useProducts();
   
-  // Filter quotations based on search query
-  const filteredQuotations = quotations?.filter(quotation => 
-    quotation.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    quotation.customerName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter quotations based on search query and status filter
+  const filteredQuotations = quotations?.filter(quotation => {
+    const matchesSearch = quotation.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quotation.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || quotation.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   // Function to get status badge class
   const getStatusClass = (status: string) => {
@@ -36,22 +65,90 @@ const Quotations = () => {
     }
   };
 
+  const handleCreateQuotation = (data: any) => {
+    createQuotation({
+      customerId: data.customerId,
+      items: data.items,
+      subtotal: data.subtotal,
+      tax: data.tax,
+      discount: data.discount,
+      total: data.total,
+      notes: data.notes,
+      expiryDate: data.expiryDate,
+      status: data.status
+    });
+  };
+
+  const handleUpdateQuotation = (data: any) => {
+    if (selectedQuotation) {
+      updateQuotation({
+        id: selectedQuotation.id,
+        quotation: {
+          customerId: data.customerId,
+          items: data.items,
+          subtotal: data.subtotal,
+          tax: data.tax,
+          discount: data.discount,
+          total: data.total,
+          notes: data.notes,
+          expiryDate: data.expiryDate,
+          status: data.status
+        }
+      });
+    }
+  };
+
+  const openEditModal = (quotation: Quotation) => {
+    setSelectedQuotation(quotation);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="search"
-              placeholder="Search quotations..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:space-x-4">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                type="search"
+                placeholder="Search quotations..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="w-full md:w-60">
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+              >
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center">
+                    <Filter className="mr-2 h-4 w-4 text-gray-500" />
+                    <span>
+                      {statusFilter === 'all' 
+                        ? 'All Statuses' 
+                        : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="accepted">Accepted</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <Button className="bg-pos-blue hover:bg-pos-lightBlue">
+          <Button 
+            className="bg-pos-blue hover:bg-pos-lightBlue"
+            onClick={() => setIsNewQuotationModalOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" /> New Quotation
           </Button>
         </div>
@@ -109,20 +206,27 @@ const Quotations = () => {
                                 <FileText className="mr-1 h-3 w-3" /> View
                               </Button>
                               
-                              {quotation.status !== 'converted' && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-xs h-8 bg-pos-blue text-white hover:bg-pos-lightBlue"
-                                  onClick={() => convertToInvoice(quotation)}
-                                >
-                                  Convert to Invoice
-                                </Button>
-                              )}
-                              
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  
+                                  <DropdownMenuItem onClick={() => openEditModal(quotation)}>
+                                    <FileText className="mr-2 h-4 w-4" /> Edit Quotation
+                                  </DropdownMenuItem>
+                                  
+                                  {quotation.status !== 'converted' && (
+                                    <DropdownMenuItem onClick={() => convertToInvoice(quotation)}>
+                                      <Check className="mr-2 h-4 w-4" /> Convert to Invoice
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </td>
                         </tr>
@@ -141,6 +245,29 @@ const Quotations = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* New Quotation Modal */}
+      <QuotationModal
+        open={isNewQuotationModalOpen}
+        onClose={() => setIsNewQuotationModalOpen(false)}
+        onSubmit={handleCreateQuotation}
+        customers={customers || []}
+        products={products || []}
+        title="Create New Quotation"
+      />
+
+      {/* Edit Quotation Modal */}
+      {selectedQuotation && (
+        <QuotationModal
+          open={!!selectedQuotation}
+          onClose={() => setSelectedQuotation(undefined)}
+          onSubmit={handleUpdateQuotation}
+          customers={customers || []}
+          products={products || []}
+          quotation={selectedQuotation}
+          title="Edit Quotation"
+        />
+      )}
     </MainLayout>
   );
 };
