@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types";
 import { toast } from "@/components/ui/use-toast";
@@ -56,7 +55,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'
         zip: customer.address.zip,
         country: customer.address.country,
         credit_limit: customer.creditLimit,
-        current_balance: customer.currentBalance
+        current_balance: customer.currentBalance.toString() // Convert to string
       })
       .select()
       .single();
@@ -82,22 +81,26 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt'
 
 export async function updateCustomer(id: string, customer: Partial<Omit<Customer, 'id' | 'createdAt'>>) {
   try {
+    const updateData: any = {};
+    
+    if (customer.type) updateData.type = customer.type;
+    if (customer.name) updateData.name = customer.name;
+    if (customer.company !== undefined) updateData.company = customer.company;
+    if (customer.email) updateData.email = customer.email;
+    if (customer.phone) updateData.phone = customer.phone;
+    if (customer.address) {
+      if (customer.address.street) updateData.street = customer.address.street;
+      if (customer.address.city) updateData.city = customer.address.city;
+      if (customer.address.state) updateData.state = customer.address.state;
+      if (customer.address.zip) updateData.zip = customer.address.zip;
+      if (customer.address.country) updateData.country = customer.address.country;
+    }
+    if (customer.creditLimit !== undefined) updateData.credit_limit = customer.creditLimit;
+    if (customer.currentBalance !== undefined) updateData.current_balance = customer.currentBalance.toString(); // Convert to string
+    
     const { error } = await supabase
       .from('customers')
-      .update({
-        type: customer.type,
-        name: customer.name,
-        company: customer.company,
-        email: customer.email,
-        phone: customer.phone,
-        street: customer.address?.street,
-        city: customer.address?.city,
-        state: customer.address?.state,
-        zip: customer.address?.zip,
-        country: customer.address?.country,
-        credit_limit: customer.creditLimit,
-        current_balance: customer.currentBalance
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (error) throw error;

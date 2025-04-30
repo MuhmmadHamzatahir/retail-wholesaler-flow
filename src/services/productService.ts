@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product, ProductVariant } from "@/types";
 import { toast } from "@/components/ui/use-toast";
@@ -80,10 +79,10 @@ export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 
         category: product.category,
         barcode: product.barcode,
         image_url: product.image,
-        retail_price: product.retailPrice,
-        wholesale_price: product.wholesalePrice,
-        cost: product.cost,
-        tax_rate: product.taxRate,
+        retail_price: product.retailPrice.toString(), // Convert to string
+        wholesale_price: product.wholesalePrice.toString(), // Convert to string
+        cost: product.cost.toString(), // Convert to string
+        tax_rate: product.taxRate.toString(), // Convert to string
         min_stock_level: product.minStockLevel
       })
       .select()
@@ -97,8 +96,8 @@ export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 
         product_id: newProduct.id,
         name: variant.name,
         sku: variant.sku,
-        price: variant.price,
-        cost: variant.cost,
+        price: variant.price.toString(), // Convert to string
+        cost: variant.cost.toString(), // Convert to string
         attributes: variant.attributes
       }));
 
@@ -139,21 +138,23 @@ export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 
 export async function updateProduct(id: string, product: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>) {
   try {
     // Update product
+    const updateData: any = {};
+    
+    if (product.name) updateData.name = product.name;
+    if (product.description !== undefined) updateData.description = product.description;
+    if (product.category !== undefined) updateData.category = product.category;
+    if (product.barcode !== undefined) updateData.barcode = product.barcode;
+    if (product.image !== undefined) updateData.image_url = product.image;
+    if (product.retailPrice !== undefined) updateData.retail_price = product.retailPrice.toString();
+    if (product.wholesalePrice !== undefined) updateData.wholesale_price = product.wholesalePrice.toString();
+    if (product.cost !== undefined) updateData.cost = product.cost.toString();
+    if (product.taxRate !== undefined) updateData.tax_rate = product.taxRate.toString();
+    if (product.minStockLevel !== undefined) updateData.min_stock_level = product.minStockLevel;
+    updateData.updated_at = new Date().toISOString();
+    
     const { error: productError } = await supabase
       .from('products')
-      .update({
-        name: product.name,
-        description: product.description,
-        category: product.category,
-        barcode: product.barcode,
-        image_url: product.image,
-        retail_price: product.retailPrice,
-        wholesale_price: product.wholesalePrice,
-        cost: product.cost,
-        tax_rate: product.taxRate,
-        min_stock_level: product.minStockLevel,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (productError) throw productError;
@@ -170,7 +171,7 @@ export async function updateProduct(id: string, product: Partial<Omit<Product, '
 
     toast({
       title: "Product updated",
-      description: `${product.name} has been updated successfully.`
+      description: `${product.name || 'Product'} has been updated successfully.`
     });
   } catch (error: any) {
     console.error('Error updating product:', error);

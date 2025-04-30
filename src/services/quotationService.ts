@@ -84,15 +84,15 @@ export async function getQuotations(): Promise<Quotation[]> {
 
 export async function createQuotation(quotation: Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
-    // Insert quotation
+    // Insert quotation - Note: We don't need to provide quotation_number as the trigger will generate it
     const { data: newQuotation, error: quotationError } = await supabase
       .from('quotations')
       .insert({
         customer_id: quotation.customerId,
-        subtotal: quotation.subtotal,
-        tax: quotation.tax,
-        discount: quotation.discount,
-        total: quotation.total,
+        subtotal: quotation.subtotal.toString(), // Convert to string
+        tax: quotation.tax.toString(), // Convert to string
+        discount: quotation.discount.toString(), // Convert to string
+        total: quotation.total.toString(), // Convert to string
         notes: quotation.notes,
         expiry_date: quotation.expiryDate.toISOString(),
         status: quotation.status
@@ -107,10 +107,10 @@ export async function createQuotation(quotation: Omit<Quotation, 'id' | 'created
       quotation_id: newQuotation.id,
       product_id: item.productId,
       quantity: item.quantity,
-      unit_price: item.unitPrice,
-      discount: item.discount,
-      tax: item.tax,
-      total: item.total
+      unit_price: item.unitPrice.toString(), // Convert to string
+      discount: item.discount.toString(), // Convert to string
+      tax: item.tax.toString(), // Convert to string
+      total: item.total.toString() // Convert to string
     }));
 
     const { error: itemsError } = await supabase
@@ -139,19 +139,21 @@ export async function createQuotation(quotation: Omit<Quotation, 'id' | 'created
 export async function updateQuotation(id: string, quotation: Partial<Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>>) {
   try {
     // Update quotation
+    const updateData: any = {};
+    
+    if (quotation.customerId) updateData.customer_id = quotation.customerId;
+    if (quotation.subtotal !== undefined) updateData.subtotal = quotation.subtotal.toString();
+    if (quotation.tax !== undefined) updateData.tax = quotation.tax.toString();
+    if (quotation.discount !== undefined) updateData.discount = quotation.discount.toString();
+    if (quotation.total !== undefined) updateData.total = quotation.total.toString();
+    if (quotation.notes !== undefined) updateData.notes = quotation.notes;
+    if (quotation.expiryDate) updateData.expiry_date = quotation.expiryDate.toISOString();
+    if (quotation.status) updateData.status = quotation.status;
+    updateData.updated_at = new Date().toISOString();
+    
     const { error: quotationError } = await supabase
       .from('quotations')
-      .update({
-        customer_id: quotation.customerId,
-        subtotal: quotation.subtotal,
-        tax: quotation.tax,
-        discount: quotation.discount,
-        total: quotation.total,
-        notes: quotation.notes,
-        expiry_date: quotation.expiryDate?.toISOString(),
-        status: quotation.status,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (quotationError) throw quotationError;
@@ -171,10 +173,10 @@ export async function updateQuotation(id: string, quotation: Partial<Omit<Quotat
         quotation_id: id,
         product_id: item.productId,
         quantity: item.quantity,
-        unit_price: item.unitPrice,
-        discount: item.discount,
-        tax: item.tax,
-        total: item.total
+        unit_price: item.unitPrice.toString(),
+        discount: item.discount.toString(),
+        tax: item.tax.toString(),
+        total: item.total.toString()
       }));
 
       const { error: itemsError } = await supabase
@@ -231,10 +233,10 @@ export async function convertQuotationToInvoice(quotation: Quotation) {
       .insert({
         customer_id: quotation.customerId,
         quotation_id: quotation.id,
-        subtotal: quotation.subtotal,
-        tax: quotation.tax,
-        discount: quotation.discount,
-        total: quotation.total,
+        subtotal: quotation.subtotal.toString(),
+        tax: quotation.tax.toString(),
+        discount: quotation.discount.toString(),
+        total: quotation.total.toString(),
         notes: quotation.notes,
         payment_terms: "Net 30", // Default payment terms
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
@@ -250,10 +252,10 @@ export async function convertQuotationToInvoice(quotation: Quotation) {
       invoice_id: newInvoice.id,
       product_id: item.productId,
       quantity: item.quantity,
-      unit_price: item.unitPrice,
-      discount: item.discount,
-      tax: item.tax,
-      total: item.total
+      unit_price: item.unitPrice.toString(),
+      discount: item.discount.toString(),
+      tax: item.tax.toString(),
+      total: item.total.toString()
     }));
 
     const { error: itemsError } = await supabase

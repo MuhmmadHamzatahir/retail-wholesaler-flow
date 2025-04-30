@@ -88,16 +88,16 @@ export async function getInvoices(): Promise<Invoice[]> {
 
 export async function createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
-    // Insert invoice
+    // Insert invoice - Note: We don't need to provide invoice_number as the trigger will generate it
     const { data: newInvoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert({
         customer_id: invoice.customerId,
         quotation_id: invoice.quotationId,
-        subtotal: invoice.subtotal,
-        tax: invoice.tax,
-        discount: invoice.discount,
-        total: invoice.total,
+        subtotal: invoice.subtotal.toString(), // Convert to string
+        tax: invoice.tax.toString(), // Convert to string
+        discount: invoice.discount.toString(), // Convert to string
+        total: invoice.total.toString(), // Convert to string
         notes: invoice.notes,
         payment_terms: invoice.paymentTerms,
         due_date: invoice.dueDate.toISOString(),
@@ -113,10 +113,10 @@ export async function createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 
       invoice_id: newInvoice.id,
       product_id: item.productId,
       quantity: item.quantity,
-      unit_price: item.unitPrice,
-      discount: item.discount,
-      tax: item.tax,
-      total: item.total
+      unit_price: item.unitPrice.toString(), // Convert to string
+      discount: item.discount.toString(), // Convert to string
+      tax: item.tax.toString(), // Convert to string
+      total: item.total.toString() // Convert to string
     }));
 
     const { error: itemsError } = await supabase
@@ -217,21 +217,23 @@ export async function updateInvoice(id: string, invoice: Partial<Omit<Invoice, '
     if (fetchError) throw fetchError;
 
     // Update invoice
+    const updateData: any = {};
+    
+    if (invoice.customerId) updateData.customer_id = invoice.customerId;
+    if (invoice.quotationId) updateData.quotation_id = invoice.quotationId;
+    if (invoice.subtotal !== undefined) updateData.subtotal = invoice.subtotal.toString();
+    if (invoice.tax !== undefined) updateData.tax = invoice.tax.toString();
+    if (invoice.discount !== undefined) updateData.discount = invoice.discount.toString();
+    if (invoice.total !== undefined) updateData.total = invoice.total.toString();
+    if (invoice.notes !== undefined) updateData.notes = invoice.notes;
+    if (invoice.paymentTerms !== undefined) updateData.payment_terms = invoice.paymentTerms;
+    if (invoice.dueDate) updateData.due_date = invoice.dueDate.toISOString();
+    if (invoice.status) updateData.status = invoice.status;
+    updateData.updated_at = new Date().toISOString();
+    
     const { error: invoiceError } = await supabase
       .from('invoices')
-      .update({
-        customer_id: invoice.customerId,
-        quotation_id: invoice.quotationId,
-        subtotal: invoice.subtotal,
-        tax: invoice.tax,
-        discount: invoice.discount,
-        total: invoice.total,
-        notes: invoice.notes,
-        payment_terms: invoice.paymentTerms,
-        due_date: invoice.dueDate?.toISOString(),
-        status: invoice.status,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (invoiceError) throw invoiceError;
@@ -250,10 +252,13 @@ export async function updateInvoice(id: string, invoice: Partial<Omit<Invoice, '
 
         if (customerFetchError) throw customerFetchError;
 
+        const currentBalance = parseFloat(customerData.current_balance) || 0;
+        const invoiceTotal = invoice.total || parseFloat(originalInvoice.total);
+        
         const { error: customerUpdateError } = await supabase
           .from('customers')
           .update({
-            current_balance: parseFloat(customerData.current_balance) + (invoice.total || originalInvoice.total)
+            current_balance: (currentBalance + invoiceTotal).toString()
           })
           .eq('id', invoice.customerId || originalInvoice.customer_id);
 
@@ -272,10 +277,13 @@ export async function updateInvoice(id: string, invoice: Partial<Omit<Invoice, '
 
         if (customerFetchError) throw customerFetchError;
 
+        const currentBalance = parseFloat(customerData.current_balance) || 0;
+        const invoiceTotal = invoice.total || parseFloat(originalInvoice.total);
+        
         const { error: customerUpdateError } = await supabase
           .from('customers')
           .update({
-            current_balance: Math.max(0, parseFloat(customerData.current_balance) - (invoice.total || originalInvoice.total))
+            current_balance: Math.max(0, currentBalance - invoiceTotal).toString()
           })
           .eq('id', invoice.customerId || originalInvoice.customer_id);
 

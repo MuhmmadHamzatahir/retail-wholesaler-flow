@@ -1,4 +1,3 @@
-
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -234,7 +233,7 @@ const Index = () => {
                         <td className="py-2 px-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
                             ${invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
-                            invoice.status === 'pending' || invoice.status === 'sent' ? 'bg-yellow-100 text-yellow-800' :
+                            invoice.status === 'sent' ? 'bg-yellow-100 text-yellow-800' :
                             'bg-red-100 text-red-800'}`}
                           >
                             {invoice.status}
